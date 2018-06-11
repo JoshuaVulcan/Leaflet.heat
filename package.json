@@ -14,7 +14,7 @@
   "author": "Vladimir Agafonkin",
   "repository": {
     "type": "git",
-    "url": "git://github.com/Leaflet/Leaflet.heat.git"
+    "url": "git://github.com/JoshuaVulcan/Leaflet.heat.git"
   },
   "main": "dist/leaflet-heat.js",
   "devDependencies": {
