@@ -1,5 +1,17 @@
 'use strict';
 
+var metersPerPixel = function (map) {
+    var centerLatLng = map.getCenter(); // get map center
+    var pointC = map.latLngToContainerPoint(centerLatLng); // convert to containerpoint (pixels)
+    var pointX = [pointC.x + 100, pointC.y]; // add one pixel to x
+
+    // convert containerpoints to latlng's
+    var latLngC = map.containerPointToLatLng(pointC);
+    var latLngX = map.containerPointToLatLng(pointX);
+
+    return (latLngC.distanceTo(latLngX) / 100); // calculate distance between c and x (latitude)
+};
+
 L.HeatLayer = (L.Layer ? L.Layer : L.Class).extend({
 
     // options: {
@@ -49,7 +61,7 @@ L.HeatLayer = (L.Layer ? L.Layer : L.Class).extend({
 
         if (this.options.pane) {
             this.getPane().appendChild(this._canvas);
-        }else{
+        } else {
             map._panes.overlayPane.appendChild(this._canvas);
         }
 
@@ -65,7 +77,7 @@ L.HeatLayer = (L.Layer ? L.Layer : L.Class).extend({
     onRemove: function (map) {
         if (this.options.pane) {
             this.getPane().removeChild(this._canvas);
-        }else{
+        } else {
             map.getPanes().overlayPane.removeChild(this._canvas);
         }
 
@@ -99,7 +111,9 @@ L.HeatLayer = (L.Layer ? L.Layer : L.Class).extend({
     },
 
     _updateOptions: function () {
-        this._heat.radius(this.options.radius || this._heat.defaultRadius, this.options.blur);
+        if (!this._map) return;
+
+        this._heat.radius(this.options.radiusInMeters / metersPerPixel(this._map), this.options.blur);
 
         if (this.options.gradient) {
             this._heat.gradient(this.options.gradient);
@@ -129,6 +143,9 @@ L.HeatLayer = (L.Layer ? L.Layer : L.Class).extend({
         if (!this._map) {
             return;
         }
+
+        this._heat.radius(this.options.radiusInMeters / metersPerPixel(this._map), this.options.blur);
+
         var data = [],
             r = this._heat._r,
             size = this._map.getSize(),
@@ -137,8 +154,8 @@ L.HeatLayer = (L.Layer ? L.Layer : L.Class).extend({
                 size.add([r, r])),
 
             max = this.options.max === undefined ? 1 : this.options.max,
-            maxZoom = this.options.maxZoom === undefined ? this._map.getMaxZoom() : this.options.maxZoom,
-            v = 1 / Math.pow(2, Math.max(0, Math.min(maxZoom - this._map.getZoom(), 12))),
+            // maxZoom = this.options.maxZoom === undefined ? this._map.getMaxZoom() : this.options.maxZoom,
+            // v = 1 / Math.pow(2, Math.max(0, Math.min(maxZoom - this._map.getZoom(), 12))),
             cellSize = r / 2,
             grid = [],
             panePos = this._map._getMapPanePos(),
@@ -156,7 +173,7 @@ L.HeatLayer = (L.Layer ? L.Layer : L.Class).extend({
                 var alt =
                     this._latlngs[i].alt !== undefined ? this._latlngs[i].alt :
                     this._latlngs[i][2] !== undefined ? +this._latlngs[i][2] : 1;
-                k = alt * v;
+                k = alt;
 
                 grid[y] = grid[y] || [];
                 cell = grid[y][x];
